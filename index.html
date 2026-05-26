@@ -316,17 +316,46 @@
     }
 
     function renderSchedules() {
-      const table = document.getElementById('schedulesTable');
-      if (schedules.length === 0) {
-        table.innerHTML = `<tbody><tr><td style="color: #94a3b8; font-style: italic; border:none;">No hay horarios registrados.</td></tr></tbody>`;
-        return;
-      }
+  const table = document.getElementById('schedulesTable');
+  if (schedules.length === 0) {
+    table.innerHTML = `<tbody><tr><td style="color: #94a3b8; font-style: italic; border:none;">No hay horarios registrados.</td></tr></tbody>`;
+    return;
+  }
 
-      let html = `<thead><tr><th>Fecha/Hora</th><th>Encuentro</th><th>Campo</th></tr></thead><tbody>`;
+  let html = `<thead><tr><th>Fecha/Hora</th><th>Encuentro</th><th>Campo</th></tr></thead><tbody>`;
+  
+  schedules.sort((a,b) => new Date(a.dateTime) - new Date(b.dateTime)).forEach(s => {
+    let fechaFinal = s.dateTime;
+    let horaFinal = "";
+
+    // Si el formato es el correcto (contiene la T de datetime-local), lo embellecemos
+    if (s.dateTime && s.dateTime.includes('T')) {
+      const [fecha, hora] = s.dateTime.split('T');
       
-      schedules.sort((a,b) => new Date(a.dateTime) - new Date(b.dateTime)).forEach(s => {
-        let fechaFormateada = "Por definir";
-        let horaFormateada = "";
+      // Pasar YYYY-MM-DD a MM/DD/YYYY
+      const partes = fecha.split('-');
+      fechaFinal = `${partes[1]}/${partes[2]}/${partes[0]}`;
+      
+      // Pasar hora militar a formato 12H AM/PM
+      const partesHora = hora.split(':');
+      let horas = parseInt(partesHora[0]);
+      let minutos = partesHora[1];
+      const ampm = horas >= 12 ? 'PM' : 'AM';
+      horas = horas % 12;
+      horas = horas ? horas : 12;
+      horaFinal = `<br><span style="color:#94a3b8; font-size:0.85rem;">⏰ ${horas}:${minutos} ${ampm}</span>`;
+    }
+
+    html += `<tr>
+      <td>${fechaFinal}${horaFinal}</td>
+      <td><strong>${s.homeTeam}</strong> <span style="color:#93c5fd;">VS</span> <strong>${s.awayTeam}</strong></td>
+      <td>📍 ${s.field}</td>
+    </tr>`;
+  });
+  
+  html += `</tbody>`;
+  table.innerHTML = html;
+}
 
         // Verificación segura: comprobamos que el dato exista y contenga la 'T'
         if (s.dateTime && s.dateTime.includes('T')) {
@@ -454,13 +483,32 @@
     });
 
     document.getElementById('scheduleForm').addEventListener('submit', function(e) {
-      e.preventDefault();
-      const newSchedule = {
-        dateTime: document.getElementById('schedDateTime').value,
-        homeTeam: document.getElementById('schedHomeTeam').value,
-        awayTeam: document.getElementById('schedAwayTeam').value,
-        field: document.getElementById('schedField').value.trim()
-      };
+  e.preventDefault();
+  
+  // Leemos exactamente los mismos ID que pusimos arriba en el HTML
+  const datetimeValue = document.getElementById('schedDateTime').value;
+  const homeTeamValue = document.getElementById('schedHomeTeam').value;
+  const awayTeamValue = document.getElementById('schedAwayTeam').value;
+  const fieldValue = document.getElementById('schedField').value.trim();
+
+  if (homeTeamValue === awayTeamValue) {
+    return alert("El equipo local y visitante no pueden ser el mismo.");
+  }
+
+  // Guardamos los datos puros sin alteraciones
+  const newSchedule = {
+    dateTime: datetimeValue, 
+    homeTeam: homeTeamValue,
+    awayTeam: awayTeamValue,
+    field: fieldValue
+  };
+
+  schedules.push(newSchedule);
+  saveData();   // Guarda en el disco local
+  renderAll();  // Redibuja las tablas
+  this.reset(); // Limpia las casillas
+  alert("✅ Partido programado con éxito");
+});
 
       if (newSchedule.homeTeam === newSchedule.awayTeam) return alert("El equipo local y visitante no pueden ser el mismo.");
 
