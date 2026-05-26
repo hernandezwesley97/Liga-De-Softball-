@@ -323,14 +323,44 @@
       }
 
       let html = `<thead><tr><th>Fecha/Hora</th><th>Encuentro</th><th>Campo</th></tr></thead><tbody>`;
+      
       schedules.sort((a,b) => new Date(a.dateTime) - new Date(b.dateTime)).forEach(s => {
-        const formattedDate = s.dateTime.replace("T", " ");
+        let fechaFormateada = "Por definir";
+        let horaFormateada = "";
+
+        // Verificación segura: comprobamos que el dato exista y contenga la 'T'
+        if (s.dateTime && s.dateTime.includes('T')) {
+          // 1. Separamos la fecha de la hora
+          const [fecha, horaCompleta] = s.dateTime.split('T');
+          
+          // 2. Formateamos la fecha (De YYYY-MM-DD a MM/DD/YYYY)
+          const fechaPartes = fecha.split('-');
+          if (fechaPartes.length === 3) {
+            fechaFormateada = `${fechaPartes[1]}/${fechaPartes[2]}/${fechaPartes[0]}`;
+          }
+          
+          // 3. Quitamos la hora militar (De 24h a 12h AM/PM)
+          const horaPartes = horaCompleta.split(':');
+          if (horaPartes.length >= 2) {
+            let horas = parseInt(horaPartes[0]);
+            let minutos = horaPartes[1];
+            const ampm = horas >= 12 ? 'PM' : 'AM';
+            horas = horas % 12;
+            horas = horas ? horas : 12; // Si es 0 lo cambia a 12
+            horaFormateada = `<br><span style="color:#94a3b8; font-size:0.85rem;">⏰ ${horas}:${minutos} ${ampm}</span>`;
+          }
+        } else if (s.dateTime) {
+          // Por si acaso hay algún dato viejo guardado en otro formato
+          fechaFormateada = s.dateTime;
+        }
+
         html += `<tr>
-          <td>${formattedDate}</td>
+          <td>${fechaFormateada}${horaFormateada}</td>
           <td><strong>${s.homeTeam}</strong> <span style="color:#93c5fd;">VS</span> <strong>${s.awayTeam}</strong></td>
-          <td>📍 ${s.field}</td>
+          <td>📍 ${s.field || 'Por definir'}</td>
         </tr>`;
       });
+      
       html += `</tbody>`;
       table.innerHTML = html;
     }
