@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Softball Stats | Liga Administrativa</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #0f172a, #1e2937);
+      color: #e2e8f0;
+    }
+    header { background: #1e40af; padding: 1.5rem 0; text-align: center; }
+    h1 { font-size: 2.8rem; color: white; }
+    .subtitle { color: #93c5fd; }
+
+    nav { background: #1e2937; padding: 1rem; text-align: center; }
+    nav button, nav a { color: #e0f2fe; margin: 0 15px; font-weight: 600; cursor: pointer; background: none; border: none; text-decoration: none; }
+
+    .container { max-width: 1250px; margin: 30px auto; padding: 0 20px; }
+
+    .card {
+      background: #1e2937;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 25px;
+      box-shadow: 0 6px 16px rgba(0,0,0,0.3);
+    }
+
+    table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+    th, td { padding: 12px; text-align: left; border-bottom: 1px solid #334155; }
+    th { background: #1e40af; color: white; }
+    tr:hover { background: #334155; }
+
+    input, select, button, textarea {
+      padding: 10px;
+      margin: 8px 0;
+      border-radius: 6px;
+      border: 1px solid #475569;
+      background: #334155;
+      color: white;
+      width: 100%;
+      font-family: inherit;
+    }
+    button { background: #3b82f6; font-weight: bold; cursor: pointer; }
+    button:hover { background: #2563eb; }
+    .btn-danger { background: #ef4444; }
+    .btn-danger:hover { background: #dc2626; }
+    .btn-small { padding: 6px 12px; width: auto; display: inline-block; margin: 0 4px; font-size: 0.9rem; }
+    .btn-warning { background: #f59e0b; }
+
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.85);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-content {
+      background: #1e2937;
+      padding: 30px;
+      border-radius: 12px;
+      width: 90%;
+      max-width: 450px;
+      text-align: center;
+    }
+
+    .admin-only { display: none; }
+    .actions { text-align: center; }
+    #searchInput { margin-bottom: 15px; }
+    
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+    @media (max-width: 768px) {
+      .grid-2 { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>⚾ CLUB DEPORTIVO DEL VALLE CDV</h1>
+    <p class="subtitle">Gestión Completa de Liga</p>
+  </header>
+
+  <nav>
+    <a href="#"></a>
+    <a href="#"></a>
+    <a href="#"></a>
+    <button onclick="showLoginModal()">👤 Admin</button>
+  </nav>
+
+  <div class="container">
+
+    <div class="grid-2">
+      <div class="card">
+        <h2>📅 Próximos Eventos de la Liga</h2>
+        <div id="eventsContainer" style="margin-top: 15px;"></div>
+      </div>
+
+      <div class="card">
+        <h2>⏰ Horarios (Próximos Partidos)</h2>
+        <table id="schedulesTable"></table>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>🏆 Clasificación General</h2>
+      <table id="standingsTable"></table>
+    </div>
+
+    <div class="card">
+      <h2>📊 Carreras por Equipo</h2>
+      <canvas id="runsChart" height="110"></canvas>
+    </div>
+
+    <div class="card">
+      <h2>📅 Últimos Partidos (Resultados)</h2>
+      <table id="matchesTable"></table>
+    </div>
+
+    <div class="card admin-only" id="adminPanel">
+      <h2>🔧 Panel de Administrador</h2>
+      <hr style="margin:20px 0; border-color:#475569">
+
+      <div class="grid-2">
+        <div>
+          <h3>📢 Publicar Evento / Anuncio</h3>
+          <form id="eventForm">
+            <input type="text" id="eventTitle" placeholder="Título del Evento (ej. Junta de Delegados)" required>
+            <input type="datetime-local" id="schedDateTime" required>
+            <textarea id="eventDesc" placeholder="Descripción o detalles del evento..." rows="3"></textarea>
+			<input type="text" id="schedField" placeholder="Campo / Estadio (ej. Campo Central)">
+            <button type="submit">Publicar Evento</button>
+          </form>
+          <table id="adminEventsTable" style="font-size: 0.9rem;"></table>
+        </div>
+
+        <div>
+          <h3>📆 Programar Horario</h3>
+          <form id="scheduleForm">
+            <input type="datetime-local" id="schedDateTime" required>
+            <select id="schedHomeTeam" required></select>
+            <select id="schedAwayTeam" required></select>
+            <input type="text" id="schedField" placeholder="Campo / Estadio (ej. Campo Central)">
+            <button type="submit">Programar Partido</button>
+          </form>
+          <table id="adminSchedulesTable" style="font-size: 0.9rem;"></table>
+        </div>
+      </div>
+
+      <hr style="margin:40px 0; border-color:#475569">
+
+      <h3>➕ Agregar Nuevo Equipo</h3>
+      <input type="text" id="newTeamName" placeholder="Nombre del equipo">
+      <button onclick="addNewTeam()">Agregar Equipo</button>
+
+      <hr style="margin:20px 0; border-color:#475569">
+
+      <h3>➕ Agregar Resultado de Partido (Cerrados)</h3>
+      <form id="matchForm">
+        <input type="date" id="date" required>
+        <select id="homeTeam" required></select>
+        <input type="number" id="homeScore" placeholder="Carreras Local (Home)" min="0" required>
+        <select id="awayTeam" required></select>
+        <input type="number" id="awayScore" placeholder="Carreras Visitante (Away)" min="0" required>
+        <button type="submit">Guardar Resultado</button>
+      </form>
+
+      <hr style="margin:20px 0; border-color:#475569">
+
+      <h3>📋 Todos los Resultados Guardados</h3>
+      <input type="text" id="searchInput" placeholder="🔎 Buscar partido..." onkeyup="filterMatches()">
+      
+      <table id="adminMatchesTable"></table>
+
+      <br>
+      <button class="btn-danger" onclick="deleteAllMatches()" style="width:auto; margin-top:10px;">
+        🗑️ Eliminar TODOS los Resultados
+      </button>
+    </div>
+  </div>
+
+  <div class="modal" id="loginModal">
+    <div class="modal-content">
+      <h3>Iniciar Sesión</h3>
+      <input type="text" id="username" placeholder="Usuario" value="admin">
+      <input type="password" id="password" placeholder="Contraseña" value="admin12345">
+      <button onclick="login()">Entrar</button>
+      <button onclick="closeModal()" style="background:#64748b;">Cancelar</button>
+    </div>
+  </div>
+
+  <footer style="text-align:center; padding:2rem; background:#0f172a; margin-top:50px; color:#94a3b8;">
+    <p><strong>Softball Stats</strong> © 2026</p>
+  </footer>
+
+  <script>
+    let teams = JSON.parse(localStorage.getItem('teams')) || ["Team White", "Team Red", "Team Blue", "Team Black"];
+    let matches = JSON.parse(localStorage.getItem('matches')) || [];
+    
+    // NUEVOS ARRAYS DE ALMACENAMIENTO
+    let events = JSON.parse(localStorage.getItem('events')) || [];
+    let schedules = JSON.parse(localStorage.getItem('schedules')) || [];
+    
+    let lastDeletedMatch = null; 
+    let isLoggedIn = false;
+    let editingMatchIndex = null;
+
+    function saveData() {
+      localStorage.setItem('teams', JSON.stringify(teams));
+      localStorage.setItem('matches', JSON.stringify(matches));
+      localStorage.setItem('events', JSON.stringify(events));
+      localStorage.setItem('schedules', JSON.stringify(schedules));
+    }
+
+    function populateTeamSelects() {
+      const selectIds = ['homeTeam', 'awayTeam', 'schedHomeTeam', 'schedAwayTeam'];
+      selectIds.forEach(id => {
+        const select = document.getElementById(id);
+        if(!select) return;
+        
+        let placeholder = "Seleccionar Equipo";
+        if(id.includes('Home')) placeholder = "Equipo Local (Home)";
+        if(id.includes('Away')) placeholder = "Equipo Visitante (Away)";
+        
+        select.innerHTML = `<option value="">${placeholder}</option>`;
+        teams.forEach(team => {
+          select.innerHTML += `<option value="${team}">${team}</option>`;
+        });
+      });
+    }
+
+    function calculateStandings() {
+      const standings = {};
+      teams.forEach(team => standings[team] = { played: 0, wins: 0, losses: 0, runsFor: 0, runsAgainst: 0 });
+
+      matches.forEach(m => {
+        const home = m.homeTeam, away = m.awayTeam;
+        if (!standings[home] || !standings[away]) return; // Resguardo si se borran equipos
+        
+        standings[home].played++; standings[home].runsFor += m.homeScore; standings[home].runsAgainst += m.awayScore;
+        if (m.homeScore > m.awayScore) standings[home].wins++; else standings[home].losses++;
+
+        standings[away].played++; standings[away].runsFor += m.awayScore; standings[away].runsAgainst += m.homeScore;
+        if (m.awayScore > m.homeScore) standings[away].wins++; else standings[away].losses++;
+      });
+
+      return Object.entries(standings)
+        .map(([team, stats]) => ({
+          team, ...stats,
+          pct: stats.played ? (stats.wins / stats.played).toFixed(3) : "0.000",
+          diff: stats.runsFor - stats.runsAgainst
+        }))
+        .sort((a, b) => b.wins - a.wins || b.diff - a.diff);
+    }
+
+    function renderStandings() { 
+      const standings = calculateStandings();
+      let html = `<thead><tr><th>Pos</th><th>Equipo</th><th>J</th><th>G</th><th>P</th><th>RF</th><th>RC</th><th>AVG</th><th>Diff</th></tr></thead><tbody>`;
+      standings.forEach((s, i) => {
+        html += `<tr><td>${i+1}</td><td><strong>${s.team}</strong></td><td>${s.played}</td><td>${s.wins}</td><td>${s.losses}</td><td>${s.runsFor}</td><td>${s.runsAgainst}</td><td>${s.pct}</td><td>${s.diff >= 0 ? '+' : ''}${s.diff}</td></tr>`;
+      });
+      html += `</tbody>`;
+      document.getElementById('standingsTable').innerHTML = html;
+    }
+
+    function renderMatches() {
+      let html = `<thead><tr><th>Fecha</th><th>Local</th><th>Visitante</th><th>Resultado</th></tr></thead><tbody>`;
+      matches.slice().reverse().forEach(m => {
+        // 1. Separamos el año, mes y día (YYYY-MM-DD)
+        const [year, month, day] = m.date.split('-');
+        // 2. Lo ordenamos en formato MM/DD/YYYY
+        const fechaFormateada = `${month}/${day}/${year}`;
+
+        // 3. Insertamos la 'fechaFormateada' en la tabla
+        html += `<tr><td>${fechaFormateada}</td><td><strong>${m.homeTeam}</strong></td><td>${m.awayTeam}</td><td><strong>${m.homeScore} - ${m.awayScore}</strong></td></tr>`;
+      });
+      html += `</tbody>`;
+      document.getElementById('matchesTable').innerHTML = html;
+    }
+
+    // === RENDERIZAR NUEVAS SECCIONES PÚBLICAS ===
+    function renderEvents() {
+      const container = document.getElementById('eventsContainer');
+      if (events.length === 0) {
+        container.innerHTML = `<p style="color: #94a3b8; font-style: italic;">No hay eventos próximos programados.</p>`;
+        return;
+      }
+      
+      let html = "";
+      events.sort((a,b) => new Date(a.date) - new Date(b.date)).forEach(ev => {
+        // 1. Separamos el año, mes y día que vienen del input
+        const [year, month, day] = ev.date.split('-');
+        // 2. Creamos el nuevo formato MM/DD/YYYY
+        const fechaFormateada = `${month}/${day}/${year}`;
+
+        html += `
+          <div style="background: #334155; padding: 12px; border-radius: 6px; margin-bottom: 10px; border-left: 4px solid #f59e0b;">
+            <div style="display: flex; justify-content: space-between; font-size: 0.85rem; color: #93c5fd; font-weight: bold;">
+              <span>📅 ${fechaFormateada}</span>
+            </div>
+            <h4 style="margin: 5px 0; color: white;">${ev.title}</h4>
+            <p style="font-size: 0.9rem; color: #cbd5e1;">${ev.desc}</p>
+          </div>`;
+      });
+      container.innerHTML = html;
+    }
+
+    function renderSchedules() {
+      const table = document.getElementById('schedulesTable');
+      if (schedules.length === 0) {
+        table.innerHTML = `<tbody><tr><td style="color: #94a3b8; font-style: italic; border:none;">No hay horarios registrados.</td></tr></tbody>`;
+        return;
+      }
+
+      let html = `<thead><tr><th>Fecha/Hora</th><th>Encuentro</th><th>Campo</th></tr></thead><tbody>`;
+      schedules.sort((a,b) => new Date(a.dateTime) - new Date(b.dateTime)).forEach(s => {
+        const formattedDate = s.dateTime.replace("T", " ");
+        html += `<tr>
+          <td>${formattedDate}</td>
+          <td><strong>${s.homeTeam}</strong> <span style="color:#93c5fd;">VS</span> <strong>${s.awayTeam}</strong></td>
+          <td>📍 ${s.field}</td>
+        </tr>`;
+      });
+      html += `</tbody>`;
+      table.innerHTML = html;
+    }
+
+    // === RENDERIZAR TABLAS INTERNAS DEL ADMINISTRADOR ===
+    function renderAdminEventsTable() {
+      let html = `<thead><tr><th>Evento</th><th>Fecha</th><th>Acción</th></tr></thead><tbody>`;
+      events.forEach((ev, idx) => {
+        html += `<tr>
+          <td><strong>${ev.title}</strong></td>
+          <td>${ev.date}</td>
+          <td><button class="btn-small btn-danger" onclick="deleteEvent(${idx})">🗑️</button></td>
+        </tr>`;
+      });
+      html += `</tbody>`;
+      document.getElementById('adminEventsTable').innerHTML = html;
+    }
+
+    function renderAdminSchedulesTable() {
+      let html = `<thead><tr><th>Partido</th><th>Fecha/Hora</th><th>Acción</th></tr></thead><tbody>`;
+      schedules.forEach((s, idx) => {
+        html += `<tr>
+          <td>${s.homeTeam} vs ${s.awayTeam}</td>
+          <td>${s.dateTime.replace("T", " ")}</td>
+          <td><button class="btn-small btn-danger" onclick="deleteSchedule(${idx})">🗑️</button></td>
+        </tr>`;
+      });
+      html += `</tbody>`;
+      document.getElementById('adminSchedulesTable').innerHTML = html;
+    }
+
+    function renderAdminMatches(filteredMatches = matches) {
+      let html = `<thead><tr><th>Fecha</th><th>Local</th><th>Visitante</th><th>Resultado</th><th>Acciones</th></tr></thead><tbody>`;
+      filteredMatches.forEach((m) => {
+        const originalIndex = matches.indexOf(m);
+        html += `<tr>
+          <td>${m.date}</td>
+          <td>${m.homeTeam}</td>
+          <td>${m.awayTeam}</td>
+          <td>${m.homeScore} - ${m.awayScore}</td>
+          <td class="actions">
+            <button class="btn-small" onclick="editMatch(${originalIndex})">✏️ Editar</button>
+            <button class="btn-small btn-danger" onclick="deleteMatch(${originalIndex})">🗑️ Eliminar</button>
+          </td>
+        </tr>`;
+      });
+      html += `</tbody>`;
+      document.getElementById('adminMatchesTable').innerHTML = html;
+    }
+
+    // === ACCIONES DE ELIMINACIÓN ===
+    function deleteEvent(index) {
+      if(confirm("¿Eliminar este evento?")) {
+        events.splice(index, 1);
+        saveData();
+        renderAll();
+      }
+    }
+
+    function deleteSchedule(index) {
+      if(confirm("¿Eliminar este horario programado?")) {
+        schedules.splice(index, 1);
+        saveData();
+        renderAll();
+      }
+    }
+
+    function deleteMatch(index) {
+      if (confirm("¿Estás seguro de eliminar este resultado?")) {
+        lastDeletedMatch = { index, data: matches[index] };
+        matches.splice(index, 1);
+        saveData();
+        renderAll();
+        showUndoNotification();
+      }
+    }
+
+    // === CAPTURA DE FORMULARIOS NUEVOS ===
+    document.getElementById('eventForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const newEvent = {
+        title: document.getElementById('eventTitle').value.trim(),
+        date: document.getElementById('eventDate').value,
+        desc: document.getElementById('eventDesc').value.trim()
+      };
+      events.push(newEvent);
+      saveData();
+      renderAll();
+      this.reset();
+      alert("✅ Evento publicado con éxito");
+    });
+
+    document.getElementById('scheduleForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const newSchedule = {
+        dateTime: document.getElementById('schedDateTime').value,
+        homeTeam: document.getElementById('schedHomeTeam').value,
+        awayTeam: document.getElementById('schedAwayTeam').value,
+        field: document.getElementById('schedField').value.trim()
+      };
+
+      if (newSchedule.homeTeam === newSchedule.awayTeam) return alert("El equipo local y visitante no pueden ser el mismo.");
+
+      schedules.push(newSchedule);
+      saveData();
+      renderAll();
+      this.reset();
+      alert("✅ Partido programado en el rol de horarios");
+    });
+
+    // === PROCESOS GENERALES YA EXISTENTES ===
+    function filterMatches() {
+      const term = document.getElementById('searchInput').value.toLowerCase();
+      const filtered = matches.filter(m => 
+        m.homeTeam.toLowerCase().includes(term) || 
+        m.awayTeam.toLowerCase().includes(term) ||
+        m.date.includes(term)
+      );
+      renderAdminMatches(filtered);
+    }
+
+    function renderChart() { 
+      const standings = calculateStandings();
+      const ctx = document.getElementById('runsChart').getContext('2d');
+      if (window.myChart) window.myChart.destroy();
+      window.myChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: standings.map(s => s.team),
+          datasets: [
+            { label: 'Carreras a Favor', data: standings.map(s => s.runsFor), backgroundColor: '#3b82f6' },
+            { label: 'Carreras en Contra', data: standings.map(s => s.runsAgainst), backgroundColor: '#ef4444' }
+          ]
+        },
+        options: { responsive: true }
+      });
+    }
+
+    function renderAll() {
+      renderStandings();
+      renderMatches();
+      renderEvents();
+      renderSchedules();
+      
+      // Actualizaciones del panel admin si está activo
+      if(isLoggedIn) {
+        renderAdminEventsTable();
+        renderAdminSchedulesTable();
+        renderAdminMatches();
+      }
+      renderChart();
+    }
+
+    function showUndoNotification() {
+      const undoBtn = document.createElement('button');
+      undoBtn.innerHTML = "↩️ Deshacer Eliminación de Resultado";
+      undoBtn.style.position = "fixed";
+      undoBtn.style.bottom = "20px";
+      undoBtn.style.right = "20px";
+      undoBtn.style.padding = "12px 20px";
+      undoBtn.style.background = "#10b981";
+      undoBtn.style.color = "white";
+      undoBtn.style.border = "none";
+      undoBtn.style.borderRadius = "8px";
+      undoBtn.style.zIndex = "2000";
+      undoBtn.style.width = "auto";
+      undoBtn.onclick = undoDelete;
+      document.body.appendChild(undoBtn);
+      setTimeout(() => undoBtn.remove(), 8000);
+    }
+
+    function undoDelete() {
+      if (lastDeletedMatch) {
+        matches.splice(lastDeletedMatch.index, 0, lastDeletedMatch.data);
+        saveData();
+        renderAll();
+        lastDeletedMatch = null;
+        alert("✅ Eliminación revertida");
+      }
+    }
+
+    function deleteAllMatches() {
+      if (confirm("⚠️ ¿Estás COMPLETAMENTE seguro?\n\nEsta acción eliminará TODOS los partidos de forma permanente.")) {
+        if (confirm("Última confirmación: ¿Eliminar absolutamente todo?")) {
+          matches = [];
+          saveData();
+          renderAll();
+          alert("Todos los partidos han sido eliminados.");
+        }
+      }
+    }
+
+    function addNewTeam() { 
+      const name = document.getElementById('newTeamName').value.trim();
+      if (name && !teams.includes(name)) {
+        teams.push(name);
+        saveData();
+        populateTeamSelects();
+        document.getElementById('newTeamName').value = '';
+        renderAll();
+        alert("✅ Equipo agregado");
+      }
+    }
+
+    document.getElementById('matchForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const matchData = {
+        date: document.getElementById('date').value,
+        homeTeam: document.getElementById('homeTeam').value,
+        homeScore: parseInt(document.getElementById('homeScore').value),
+        awayTeam: document.getElementById('awayTeam').value,
+        awayScore: parseInt(document.getElementById('awayScore').value)
+      };
+
+      if (matchData.homeTeam === matchData.awayTeam) return alert("Equipos deben ser diferentes");
+
+      if (editingMatchIndex !== null) {
+        matches[editingMatchIndex] = matchData;
+        editingMatchIndex = null;
+      } else {
+        matches.push(matchData);
+      }
+
+      saveData();
+      renderAll();
+      this.reset();
+      alert("✅ Resultado guardado correctamente");
+    });
+
+    function editMatch(index) {
+      const m = matches[index];
+      editingMatchIndex = index;
+      document.getElementById('date').value = m.date;
+      document.getElementById('homeTeam').value = m.homeTeam;
+      document.getElementById('homeScore').value = m.homeScore;
+      document.getElementById('awayTeam').value = m.awayTeam;
+      document.getElementById('awayScore').value = m.awayScore;
+      document.getElementById('date').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function showLoginModal() { document.getElementById('loginModal').style.display = 'flex'; }
+    function closeModal() { document.getElementById('loginModal').style.display = 'none'; }
+
+    function login() {
+      if (document.getElementById('username').value === "admin" && document.getElementById('password').value === "admin123") {
+        isLoggedIn = true;
+        document.getElementById('adminPanel').style.display = 'block';
+        closeModal();
+        renderAll();
+      } else {
+        alert("Credenciales incorrectas");
+      }
+    }
+
+    window.onload = () => {
+      populateTeamSelects();
+      renderAll();
+    };
+  </script>
+</body>
+</html>
