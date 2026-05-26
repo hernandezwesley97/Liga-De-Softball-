@@ -290,13 +290,17 @@
         return;
       }
       
-      // Ordenar eventos por fecha más cercana
       let html = "";
       events.sort((a,b) => new Date(a.date) - new Date(b.date)).forEach(ev => {
+        // 1. Separamos el año, mes y día que vienen del input
+        const [year, month, day] = ev.date.split('-');
+        // 2. Creamos el nuevo formato MM/DD/YYYY
+        const fechaFormateada = `${month}/${day}/${year}`;
+
         html += `
           <div style="background: #334155; padding: 12px; border-radius: 6px; margin-bottom: 10px; border-left: 4px solid #f59e0b;">
             <div style="display: flex; justify-content: space-between; font-size: 0.85rem; color: #93c5fd; font-weight: bold;">
-              <span>📅 ${ev.date}</span>
+              <span>📅 ${fechaFormateada}</span>
             </div>
             <h4 style="margin: 5px 0; color: white;">${ev.title}</h4>
             <p style="font-size: 0.9rem; color: #cbd5e1;">${ev.desc}</p>
