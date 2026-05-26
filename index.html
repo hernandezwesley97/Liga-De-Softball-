@@ -193,7 +193,7 @@
     <div class="modal-content">
       <h3>Iniciar Sesión</h3>
       <input type="text" id="username" placeholder="Usuario" value="admin">
-      <input type="password" id="password" placeholder="Contraseña" value="admin123">
+      <input type="password" id="password" placeholder="Contraseña" value="admin12345">
       <button onclick="login()">Entrar</button>
       <button onclick="closeModal()" style="background:#64748b;">Cancelar</button>
     </div>
@@ -565,7 +565,7 @@
     function closeModal() { document.getElementById('loginModal').style.display = 'none'; }
 
     function login() {
-      if (document.getElementById('username').value === "admin" && document.getElementById('password').value === "admin12345") {
+      if (document.getElementById('username').value === "admin" && document.getElementById('password').value === "admin123") {
         isLoggedIn = true;
         document.getElementById('adminPanel').style.display = 'block';
         closeModal();
