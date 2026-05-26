@@ -276,7 +276,13 @@
     function renderMatches() {
       let html = `<thead><tr><th>Fecha</th><th>Local</th><th>Visitante</th><th>Resultado</th></tr></thead><tbody>`;
       matches.slice().reverse().forEach(m => {
-        html += `<tr><td>${m.date}</td><td><strong>${m.homeTeam}</strong></td><td>${m.awayTeam}</td><td><strong>${m.homeScore} - ${m.awayScore}</strong></td></tr>`;
+        // 1. Separamos el año, mes y día (YYYY-MM-DD)
+        const [year, month, day] = m.date.split('-');
+        // 2. Lo ordenamos en formato MM/DD/YYYY
+        const fechaFormateada = `${month}/${day}/${year}`;
+
+        // 3. Insertamos la 'fechaFormateada' en la tabla
+        html += `<tr><td>${fechaFormateada}</td><td><strong>${m.homeTeam}</strong></td><td>${m.awayTeam}</td><td><strong>${m.homeScore} - ${m.awayScore}</strong></td></tr>`;
       });
       html += `</tbody>`;
       document.getElementById('matchesTable').innerHTML = html;
