@@ -136,9 +136,9 @@
           <h3>📢 Publicar Evento / Anuncio</h3>
           <form id="eventForm">
             <input type="text" id="eventTitle" placeholder="Título del Evento (ej. Junta de Delegados)" required>
-            <input type="date" id="eventDate" required>
-            <textarea id="eventDesc" placeholder="Descripción o detalles del evento..." rows="3" required></textarea>
-			<input type="text" id="schedField" placeholder="Campo / Estadio (ej. Campo Central)"required>
+            <input type="datetime-local" id="schedDateTime" required>
+            <textarea id="eventDesc" placeholder="Descripción o detalles del evento..." rows="3"></textarea>
+			<input type="text" id="schedField" placeholder="Campo / Estadio (ej. Campo Central)">
             <button type="submit">Publicar Evento</button>
           </form>
           <table id="adminEventsTable" style="font-size: 0.9rem;"></table>
@@ -150,7 +150,7 @@
             <input type="datetime-local" id="schedDateTime" required>
             <select id="schedHomeTeam" required></select>
             <select id="schedAwayTeam" required></select>
-            <input type="text" id="schedField" placeholder="Campo / Estadio (ej. Campo Central)"required>
+            <input type="text" id="schedField" placeholder="Campo / Estadio (ej. Campo Central)">
             <button type="submit">Programar Partido</button>
           </form>
           <table id="adminSchedulesTable" style="font-size: 0.9rem;"></table>
